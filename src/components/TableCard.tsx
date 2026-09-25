@@ -5,7 +5,7 @@ import { Plus, User, Clock } from 'lucide-react';
 interface TableCardProps {
     tableNumber: number;
     activeOrder?: Order;
-    onSelectTable: (tableNumber: number) => void;
+    onSelectTable: (tableNumber: number, activeOrder?: Order) => void;
     onOpenPayment?: (order: Order) => void;
 }
 
@@ -176,7 +176,7 @@ export const TableCard: React.FC<TableCardProps> = ({
             <div className="grid grid-cols-2 gap-2.5 pt-3 mt-2">
                 <button
                     type="button"
-                    onClick={() => onSelectTable(tableNumber)}
+                    onClick={() => onSelectTable(tableNumber, activeOrder)}
                     className="bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-bold text-xs py-2.5 px-3 rounded-2xl transition flex items-center justify-center gap-1 shadow-2xs"
                 >
                     <Plus size={14} className="text-purple-600" />

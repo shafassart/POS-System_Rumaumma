@@ -24,7 +24,10 @@ export const KasirPage: React.FC<KasirPageProps> = ({
   onSaveOrder,
   onCompletePayment,
 }) => {
-  const [selectedTable, setSelectedTable] = useState<number | null>(null);
+  const [orderModal, setOrderModal] = useState<{
+    tableNumber: number;
+    activeOrder?: Order;
+  } | null>(null);
   const [activeOrderToPay, setActiveOrderToPay] = useState<Order | null>(null);
   const [receiptOrder, setReceiptOrder] = useState<Order | null>(null);
   const tables = [1, 2, 3, 4, 5, 6, 7];
@@ -73,7 +76,7 @@ export const KasirPage: React.FC<KasirPageProps> = ({
         </div>
         <button
           type="button"
-          onClick={() => setSelectedTable(0)}
+          onClick={() => setOrderModal({ tableNumber: 0 })}
           className="bg-brand-secondary hover:bg-brand-secondary/90 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition flex items-center gap-1.5 w-fit"
         >
           <Plus size={16} />
@@ -155,7 +158,9 @@ export const KasirPage: React.FC<KasirPageProps> = ({
                 key={order.id}
                 tableNumber={0}
                 activeOrder={order}
-                onSelectTable={() => setSelectedTable(0)}
+                onSelectTable={(tableNumber, activeOrder) =>
+                  setOrderModal({ tableNumber, activeOrder })
+                }
                 onOpenPayment={(ord) => setActiveOrderToPay(ord)}
               />
             ))}
@@ -186,7 +191,9 @@ export const KasirPage: React.FC<KasirPageProps> = ({
                 key={tableNum}
                 tableNumber={tableNum}
                 activeOrder={activeOrder}
-                onSelectTable={(tbl) => setSelectedTable(tbl)}
+                onSelectTable={(tableNumber, activeOrder) =>
+                  setOrderModal({ tableNumber, activeOrder })
+                }
                 onOpenPayment={(ord) => setActiveOrderToPay(ord)}
               />
             );
@@ -195,17 +202,15 @@ export const KasirPage: React.FC<KasirPageProps> = ({
       </div>
 
       {/* Modal Pemesanan */}
-      {selectedTable !== null && (
+      {orderModal !== null && (
         <OrderModal
-          tableNumber={selectedTable}
-          activeOrder={orders.find(
-            (o) => o.tableNumber === selectedTable && o.status !== "SELESAI",
-          )}
+          tableNumber={orderModal.tableNumber}
+          activeOrder={orderModal.activeOrder}
           occupiedTableNumbers={activeOrders
             .filter((order) => order.tableNumber > 0)
             .map((order) => order.tableNumber)}
           menuList={menuList.filter((item) => item.isAvailable)}
-          onClose={() => setSelectedTable(null)}
+          onClose={() => setOrderModal(null)}
           onSaveOrder={onSaveOrder}
         />
       )}
