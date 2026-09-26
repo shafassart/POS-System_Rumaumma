@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import type { Order } from '../types/index';
 import { Plus, User, Clock } from 'lucide-react';
 
@@ -9,6 +9,21 @@ interface TableCardProps {
     onOpenPayment?: (order: Order) => void;
 }
 
+// Helper untuk format waktu relatif (misal: "15 mnt lalu")
+const getElapsedTime = (createdAtStr?: string) => {
+    if (!createdAtStr) return 'Baru saja';
+
+    const now = new Date().getTime();
+    const created = new Date(createdAtStr).getTime();
+    const diffInMinutes = Math.floor((now - created) / (1000 * 60));
+
+    if (diffInMinutes < 1) return 'Baru saja';
+    if (diffInMinutes < 60) return `${diffInMinutes} mnt lalu`;
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    return `${diffInHours} jam lalu`;
+};
+
 export const TableCard: React.FC<TableCardProps> = ({
     tableNumber,
     activeOrder,
@@ -16,6 +31,21 @@ export const TableCard: React.FC<TableCardProps> = ({
     onOpenPayment,
 }) => {
     const isTakeaway = tableNumber === 0;
+
+    const [timeAgo, setTimeAgo] = useState<string>(
+        getElapsedTime(activeOrder?.createdAt)
+    );
+
+    useEffect(() => {
+        if (!activeOrder?.createdAt) return;
+
+        setTimeAgo(getElapsedTime(activeOrder.createdAt));
+        const interval = setInterval(() => {
+            setTimeAgo(getElapsedTime(activeOrder.createdAt));
+        }, 30000); // Re-calculate setiap 30 detik
+
+        return () => clearInterval(interval);
+    }, [activeOrder?.createdAt]);
 
     // Render Jika Meja/Takeaway KOSONG
     if (!activeOrder) {
@@ -49,8 +79,8 @@ export const TableCard: React.FC<TableCardProps> = ({
                         <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-lg">
                             🍽️
                         </div>
-                        <p className="font-bold text-xs text-gray-700">Meja Siap Ditempati</p>
-                        <p className="text-[10px] text-gray-400">Kapasitas: 4 Orang</p>
+                        <p className="font-bold text-xs text-gray-700">Meja kosong</p>
+                        <p className="text-[10px] text-gray-400">Perhatikan Kebersihan Meja</p>
                     </div>
                 </div>
 
@@ -71,7 +101,7 @@ export const TableCard: React.FC<TableCardProps> = ({
     // Render Jika ADA PESANAN AKTIF (Sesuai Gambar Referensi)
     return (
         <div
-            className={`rounded-3xl border-2 p-4 shadow-sm transition flex flex-col justify-between relative overflow-hidden bg-amber-50/20 ${isTakeaway ? 'border-brand-secondary/80' : 'border-amber-300'
+            className={`rounded-3xl border-2 p-4 shadow-sm transition flex flex-col justify-between relative overflow-hidden bg-amber-50/20 ${isTakeaway ? 'border-brand-secondary/80' : 'border-blue-200'
                 }`}
         >
             {/* Garis Accent Atas Kartu */}
@@ -93,24 +123,35 @@ export const TableCard: React.FC<TableCardProps> = ({
                     /* Header Kartu Meja */
                     <div className="flex justify-between items-start">
                         <div className="flex items-start gap-2.5">
-                            <span className="w-9 h-9 rounded-2xl bg-black text-white font-extrabold text-sm flex items-center justify-center shadow-2xs">
+                            <span className="w-9 h-9 rounded-2xl bg-brand-primary text-white font-extrabold text-sm flex items-center justify-center shadow-2xs">
                                 {tableNumber}
                             </span>
                             <div>
-                                <h4 className="font-extrabold text-base text-brand-dark leading-tight">
+                                <h4 className="font-extrabold text-base text-brand-black leading-tight">
                                     Meja {tableNumber}
                                 </h4>
                                 <p className="text-[11px] text-gray-400 font-medium">Lantai Utama</p>
                             </div>
                         </div>
 
-                        {/* Status Badge Oval Warm Cream */}
-                        <span className="bg-amber-100/70 text-amber-900 border border-amber-200/80 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 text-right">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            <span>
-                                Dapur Memasak ({activeOrder.items.reduce((s, i) => s + i.qty, 0)} item)
-                            </span>
-                        </span>
+                        {/* Status Badge Oval (Dinamis: Memasak vs Makanan Siap) */}
+                        {(() => {
+                            const isAllCompleted = activeOrder.items.length > 0 && activeOrder.items.every(i => i.isCompleted);
+                            
+                            return isAllCompleted ? (
+                                <span className="bg-emerald-100/80 text-emerald-900 border border-emerald-200/80 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 text-right">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span>Orderan Selesai</span>
+                                </span>
+                            ) : (
+                                <span className="bg-amber-100/70 text-amber-900 border border-amber-200/80 text-[11px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 text-right">
+                                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    <span>
+                                        Dapur Memasak ({activeOrder.items.reduce((s, i) => s + i.qty, 0)} item)
+                                    </span>
+                                </span>
+                            );
+                        })()}
                     </div>
                 )}
 
@@ -122,7 +163,7 @@ export const TableCard: React.FC<TableCardProps> = ({
                         </span>
                     )}
                     <span className="flex items-center gap-1 text-[11px] text-gray-400 ml-auto">
-                        <Clock size={12} /> Baru saja
+                        <Clock size={12} /> {timeAgo}
                     </span>
                 </div>
 
@@ -154,9 +195,15 @@ export const TableCard: React.FC<TableCardProps> = ({
                                 {item.name}
                             </span>
 
-                            <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-                                ⏳ Dimasak
-                            </span>
+                            {item.isCompleted ? (
+                                <span className="text-[11px] font-bold text-emerald-800 flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200/80">
+                                    ✅ Siap
+                                </span>
+                            ) : (
+                                <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
+                                    ⏳ Dimasak
+                                </span>
+                            )}
                         </div>
                     ))}
                 </div>

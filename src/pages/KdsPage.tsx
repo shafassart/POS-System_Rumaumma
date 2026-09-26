@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
 import type { Order, OrderStatus, MenuItem } from "../types/index";
 import { isImageSource } from "../utils/imageSource";
-import { Volume2, VolumeX, CheckCircle2 } from "lucide-react";
+import { Volume2, VolumeX, CheckCircle2, TimerIcon } from "lucide-react";
 
 interface KdsPageProps {
   orders: Order[];
@@ -10,6 +10,21 @@ interface KdsPageProps {
   onUpdateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
   onToggleItemComplete: (orderId: string, itemId: string) => void;
 }
+
+// Helper untuk format waktu relatif (misal: "15 mnt lalu")
+const getElapsedTime = (createdAtStr?: string) => {
+  if (!createdAtStr) return "Baru saja";
+
+  const now = new Date().getTime();
+  const created = new Date(createdAtStr).getTime();
+  const diffInMinutes = Math.floor((now - created) / (1000 * 60));
+
+  if (diffInMinutes < 1) return "Baru saja";
+  if (diffInMinutes < 60) return `${diffInMinutes} mnt lalu`;
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  return `${diffInHours} jam lalu`;
+};
 
 export const KdsPage: React.FC<KdsPageProps> = ({
   orders,
@@ -20,6 +35,28 @@ export const KdsPage: React.FC<KdsPageProps> = ({
   const [hideCompletedItems, setHideCompletedItems] = useState<boolean>(true);
   const [isSoundActive, setIsSoundActive] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  // Komponen kecil agar interval timer berjalan independen tiap tiket
+  const KdsTimerBadge: React.FC<{ createdAt?: string }> = ({ createdAt }) => {
+    const [timeAgo, setTimeAgo] = useState<string>(getElapsedTime(createdAt));
+
+    useEffect(() => {
+      if (!createdAt) return;
+
+      setTimeAgo(getElapsedTime(createdAt));
+      const interval = setInterval(() => {
+        setTimeAgo(getElapsedTime(createdAt));
+      }, 30000); // Re-calculate tiap 30 detik
+
+      return () => clearInterval(interval);
+    }, [createdAt]);
+
+    return (
+      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200/60 flex items-center gap-1">
+        ⏱️ {timeAgo}
+      </span>
+    );
+  };
 
   // Ambil pesanan yang belum selesai
   const activeOrders = orders.filter((o) => o.status !== "SELESAI");
@@ -157,23 +194,29 @@ export const KdsPage: React.FC<KdsPageProps> = ({
         </p>
       )}
       {/* Top Banner Header KDS Hitam */}
-      <div className="bg-[#1D4ED8] text-white p-4 sm:p-5 rounded-3xl shadow-md flex flex-col md:flex-row justify-between md:items-center gap-4">
+      <div className="bg-brand-secondary backdrop-blur-sm text-white p-4 sm:p-5 rounded-3xl shadow-md flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div className="flex items-center space-x-3">
           <div className="text-3xl">👨‍🍳</div>
           <div>
-            <h2 className="font-extrabold text-lg leading-tight flex items-center gap-2">
+            <h2 className="font-bold text-lg leading-tight flex items-center gap-2">
               Layar Dapur Ruma Umma (KDS)
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              Urutan FIFO (First In First Out) • Masakan pertama masuk berada
-              paling awal • Ceklis item yang sudah matang.
+              Urutan FIFO (First In First Out)
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              • Masakan pertama masuk berada
+              paling awal
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              • Ceklis item yang sudah matang.
             </p>
           </div>
         </div>
 
         {/* Controls Switcher */}
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center space-x-2 bg-zinc-800/80 px-3 py-2 rounded-2xl text-xs font-bold text-gray-200 cursor-pointer border border-zinc-700/60">
+          <label className="flex items-center space-x-2 inset-0 bg-black/25 backdrop-blur-sm px-3 py-2 rounded-2xl text-xs font-bold text-gray-200 cursor-pointer border border-blue-700/60">
             <input
               type="checkbox"
               checked={hideCompletedItems}
@@ -193,7 +236,7 @@ export const KdsPage: React.FC<KdsPageProps> = ({
             }`}
           >
             {isSoundActive ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            <span>{isSoundActive ? "🔊 Bunyi Aktif" : "🔇 Mute"}</span>
+            <span>{isSoundActive ? " Bunyi Aktif" : "Mute"}</span>
           </button>
         </div>
       </div>
@@ -325,7 +368,7 @@ export const KdsPage: React.FC<KdsPageProps> = ({
                     {/* Baris 1: Index Tiket, Order ID, Indikator Waktu */}
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-black text-white font-extrabold text-xs flex items-center justify-center">
+                        <span className="w-6 h-6 rounded-lg bg-brand-secondary text-white font-extrabold text-xs flex items-center justify-center">
                           #{idx + 1}
                         </span>
                         <span className="font-extrabold text-xs text-gray-700">
@@ -333,9 +376,7 @@ export const KdsPage: React.FC<KdsPageProps> = ({
                         </span>
                       </div>
 
-                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/70 px-2.5 py-0.5 rounded-full border border-emerald-200/60 flex items-center gap-1">
-                        ⏱️ Baru saja
-                      </span>
+                      <KdsTimerBadge createdAt={order.createdAt || (order as any).created_at} />
                     </div>
 
                     {/* Baris 2: Badge Lokasi & Nama Tamu */}
@@ -345,7 +386,7 @@ export const KdsPage: React.FC<KdsPageProps> = ({
                           🛍️ BUNGKUS / TAKEAWAY
                         </span>
                       ) : (
-                        <span className="bg-black text-white font-extrabold text-[10px] px-2.5 py-1 rounded-xl">
+                        <span className="bg-brand-secondary text-white font-extrabold text-[10px] px-2.5 py-1 rounded-xl">
                           MEJA {order.tableNumber}
                         </span>
                       )}

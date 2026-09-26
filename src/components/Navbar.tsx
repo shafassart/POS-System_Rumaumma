@@ -6,6 +6,7 @@ import {
   History,
   Wifi,
   Menu,
+  X,
   UserRoundCog,
 } from "lucide-react";
 import type { UserRole } from "../types/index";
@@ -59,10 +60,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     <>
       <button
         onClick={() => handleTabChange("kasir")}
-        className={`flex items-center space-x-0.5 px-2 py-0.5 rounded-lg text-xs font-bold transition ${
+        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 ${
           activeTab === "kasir"
-            ? "bg-brand-secondary text-white shadow-xs"
-            : "text-gray-600 hover:bg-white/60"
+            ? "bg-white text-brand-secondary shadow-sm ring-1 ring-black/5 scale-[1.02]"
+            : "text-gray-500 hover:text-gray-600 hover:bg-white/50"
         }`}
       >
         <Utensils size={14} />
@@ -71,10 +72,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       <button
         onClick={() => handleTabChange("dapur")}
-        className={`flex items-center space-x-0.5 px-2 py--.5 rounded-lg text-xs font-bold transition ${
+        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 ${
           activeTab === "dapur"
-            ? "bg-brand-secondary text-white shadow-xs"
-            : "text-gray-600 hover:bg-white/60"
+            ? "bg-white text-brand-secondary shadow-sm ring-1 ring-black/5 scale-[1.02]"
+            : "text-gray-500 hover:text-gray-600 hover:bg-white/50"
         }`}
       >
         <ChefHat size={14} />
@@ -84,10 +85,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       {currentRole === "OWNER" && (
         <button
           onClick={() => handleTabChange("menu-admin")}
-          className={`flex items-center space-x-0.5 px-2 py-0.5 rounded-lg text-xs font-bold transition ${
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 ${
             activeTab === "menu-admin"
-              ? "bg-brand-secondary text-white shadow-xs"
-              : "text-gray-600 hover:bg-white/60"
+              ? "bg-white text-brand-secondary shadow-sm ring-1 ring-black/5 scale-[1.02]"
+              : "text-gray-500 hover:text-gray-600 hover:bg-white/50"
           }`}
         >
           <Settings size={14} />
@@ -101,7 +102,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             onOpenProfile();
             setIsMenuOpen(false);
           }}
-          className="flex items-center space-x-0.5 px-2 py-0.5 rounded-lg text-xs font-bold text-gray-600 hover:bg-white/60 transition"
+          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 ${
+            activeTab === "owner-dashboard"
+              ? "bg-white text-brand-secondary shadow-sm ring-1 ring-black/5 scale-[1.02]"
+              : "text-gray-500 hover:text-gray-600 hover:bg-white/50"
+          }`}
         >
           <UserRoundCog size={14} />
           <span>Profil & Dashboard</span>
@@ -110,10 +115,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       <button
         onClick={() => handleTabChange("history")}
-        className={`flex items-center space-x-0.5 px-2 py-0.5 rounded-lg text-xs font-bold transition ${
+        className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-200 ${
           activeTab === "history"
-            ? "bg-brand-secondary text-white shadow-xs"
-            : "text-gray-600 hover:bg-white/60"
+            ? "bg-white text-brand-secondary shadow-sm ring-1 ring-black/5 scale-[1.02]"
+            : "text-gray-500 hover:text-gray-600 hover:bg-white/50"
         }`}
       >
         <History size={14} />
@@ -167,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Center: Main Navigation Tabs */}
-        <nav className="hidden md:flex items-center space-x-0.5 bg-blue-50/90 px-2 rounded-xl border border-blue-80 text-xs">
+        <nav className="hidden md:flex items-center space-x-1 bg-white/10 backdrop-blur-sm p-1 rounded-2xl border border-gray-200/60 shadow-inner">
           {navigation}
         </nav>
 
@@ -214,13 +219,66 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       </div>
-      {isMenuOpen && (
+      {/* {isMenuOpen && (
         <div className="md:hidden border-t border-blue-100 bg-white px-4 py-3 shadow-lg">
           <nav className="flex flex-col gap-1 bg-blue-50 p-2 rounded-xl border border-blue-100">
             {navigation}
           </nav>
         </div>
+      )} */}
+      {/* 1. OVERLAY / BACKDROP GELAP */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 transition-all duration-300 md:hidden"
+          onClick={() => setIsMenuOpen(false)}
+        />
       )}
+
+      {/* 2. DRAWER MENU NAVIGASI SAMPING */}
+      <div
+        className={`fixed top-0 left-0 bottom-0 w-72 bg-white z-50 p-5 shadow-3xl transform transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div>
+          {/* Header Drawer Samping */}
+          <div className="flex justify-between items-center pb-4 mb-4 border-b border-gray-100">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-full bg-brand-secondary/20 flex items-center justify-center text-lg shadow-2xs overflow-hidden">
+                {isImageSource(profile.logo) ? (
+                  <img
+                    src={profile.logo}
+                    alt="Logo profil"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  profile.logo
+                )}
+              </div>
+              <h3 className="font-extrabold text-sm text-brand-dark">
+                {profile.name}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(false)}
+              className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-xl transition"
+            >
+              <X size={22} />
+            </button>
+          </div>
+
+          {/* List Navigasi Samping */}
+          <nav className="flex flex-col gap-5">
+            {navigation}
+          </nav>
+        </div>
+
+        {/* Info Tambahan di Bawah Drawer (Opsional) */}
+        <div className="pt-4 border-t border-gray-100 text-xs text-gray-600 font-medium">
+          <p>Ruma Umma POS v1.0</p>
+        </div>
+      </div>
       {isLoginModalOpen && (
         <Suspense fallback={null}>
           <LoginModal
